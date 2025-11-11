@@ -5,6 +5,42 @@ from .planner import plan_step  # Updated import
 from .executor import execute_step
 from .replanner import replan_step
 
+"""
+Graph拓扑图 (Graph Topology):
+
+工作流程说明：
+1. Planner: 创建初始计划 (plan = ["task1", "task2", "task3"])
+2. Executor: 执行 plan[0] (task1)，执行后从 plan 中移除该任务
+   - 执行后: plan = ["task2", "task3"]
+   - 将执行结果添加到 past_steps
+3. Replanner: 分析执行结果和剩余计划
+   - 如果任务完成 → 返回 Response，结束流程
+   - 如果未完成 → 返回新的 Plan（包含剩余任务或调整后的任务）
+4. 循环: 如果 replanner 返回 Plan，流程回到 Executor 继续执行
+
+    [START]
+       |
+       v
+   ┌─────────┐
+   │ planner │  (入口节点，创建初始计划)
+   └────┬────┘
+        |
+        v
+   ┌──────────┐
+   │ executor │  (执行 plan[0]，执行后从 plan 中移除)
+   └────┬─────┘
+        |
+        v
+   ┌───────────┐
+   │ replanner │  (分析结果，决定继续或结束)
+   └────┬──────┘
+        |
+        | (条件边)
+        ├─── 如果 state["response"] 存在 → [END]
+        |
+        └─── 否则 → executor (循环执行剩余任务)
+"""
+
 # Define the graph
 workflow = StateGraph(PlanExecute)
 
